@@ -6,6 +6,7 @@ import java.util.Collections;
 import java.util.Iterator;
 import java.io.IOException;
 import java.io.InterruptedIOException;
+import java.net.URI;
 import java.io.InputStream;
 
 import com.google.common.annotations.VisibleForTesting;
@@ -201,7 +202,7 @@ public abstract class AbstractS3FileInputPlugin
     public TransactionalFileInput open(TaskSource taskSource, int taskIndex)
     {
         PluginTask task = taskSource.loadTask(getTaskClass());
-        return new S3FileInput(task, taskIndex);
+        return new S3FileInput(task, taskIndex, new SingleFileProvider(task, taskIndex));
     }
 
     @VisibleForTesting
@@ -276,9 +277,11 @@ public abstract class AbstractS3FileInputPlugin
             extends InputStreamFileInput
             implements TransactionalFileInput
     {
-        public S3FileInput(PluginTask task, int taskIndex)
+        private SingleFileProvider provider;
+        public S3FileInput(PluginTask task, int taskIndex, SingleFileProvider provider)
         {
-            super(task.getBufferAllocator(), new SingleFileProvider(task, taskIndex));
+            super(task.getBufferAllocator(), provider);
+            this.provider = provider;
         }
 
         public void abort() { }
@@ -290,6 +293,11 @@ public abstract class AbstractS3FileInputPlugin
 
         @Override
         public void close() { }
+
+        @Override
+        public String getName() {
+            return provider.getName();
+        }
     }
 
     // TODO create single-file InputStreamFileInput utility
@@ -299,6 +307,7 @@ public abstract class AbstractS3FileInputPlugin
         private AmazonS3Client client;
         private final String bucket;
         private final Iterator<String> iterator;
+        private URI uri;
 
         public SingleFileProvider(PluginTask task, int taskIndex)
         {
@@ -313,12 +322,22 @@ public abstract class AbstractS3FileInputPlugin
             if (!iterator.hasNext()) {
                 return null;
             }
-            GetObjectRequest request = new GetObjectRequest(bucket, iterator.next());
+            String current = iterator.next();
+            updateUri(current);
+            GetObjectRequest request = new GetObjectRequest(bucket, current);
             S3Object obj = client.getObject(request);
             return new ResumableInputStream(obj.getObjectContent(), new S3InputStreamReopener(client, request, obj.getObjectMetadata().getContentLength()));
         }
 
         @Override
         public void close() { }
+
+        public String getName() {
+            return this.uri.toString();
+        }
+
+        private void updateUri(String path) {
+            this.uri = URI.create("s3://" + bucket + "/" + path);
+        }
     }
 }

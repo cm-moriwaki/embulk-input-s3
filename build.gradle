@@ -27,19 +27,22 @@ subprojects {
         compile.exclude group: 'commons-logging', module: 'commons-logging'   // commons-logging api is provided by jcl-over-slf4j
     }
 
-    sourceCompatibility = 1.7
-    targetCompatibility = 1.7
+    sourceCompatibility = 1.8
+    targetCompatibility = 1.8
 
     dependencies {
-        compile  "org.embulk:embulk-core:0.7.10"
-        provided "org.embulk:embulk-core:0.7.10"
+//        compile  "org.embulk:embulk-core:0.7.10"
+//        provided "org.embulk:embulk-core:0.7.10"
         compile "com.amazonaws:aws-java-sdk-s3:1.10.33"
         runtime "org.slf4j:jcl-over-slf4j:1.7.12"  // aws-sdk uses Apache Commons Logging and Embulk uses slf4j
         testCompile "com.amazonaws:aws-java-sdk-sts:1.10.33"
         testCompile "junit:junit:4.+"
         testCompile "org.mockito:mockito-core:1.+"
-        testCompile "org.embulk:embulk-standards:0.7.10"
-        testCompile "org.embulk:embulk-core:0.7.10:tests"
+//        testCompile "org.embulk:embulk-standards:0.7.10"
+//        testCompile "org.embulk:embulk-core:0.7.10:tests"
+        compile files('libs/embulk-0.8.15.jar')
+        provided files('libs/embulk-0.8.15.jar')
+        testCompile files('libs/embulk-core-0.8.15-tests.jar')
     }
 
     gradle.projectsEvaluated {
