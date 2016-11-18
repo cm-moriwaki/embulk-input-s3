@@ -293,11 +293,6 @@ public abstract class AbstractS3FileInputPlugin
 
         @Override
         public void close() { }
-
-        @Override
-        public String getName() {
-            return provider.getName();
-        }
     }
 
     // TODO create single-file InputStreamFileInput utility
@@ -332,7 +327,8 @@ public abstract class AbstractS3FileInputPlugin
         @Override
         public void close() { }
 
-        public String getName() {
+        @Override
+        public String getCurrentName() {
             return this.uri.toString();
         }
 
